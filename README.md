@@ -2,9 +2,9 @@
 
 [![Kernel](https://img.shields.io/badge/Kernel-Linux%207.2--rc2-green.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820)
 [![SoC](https://img.shields.io/badge/SoC-Exynos%209820-blue.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820)
-[![Status](https://img.shields.io/badge/Status-active%20bring--up-orange.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues)
+[![Status](https://img.shields.io/badge/Status-active%20bring--up-orange.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues)
 [![License](https://img.shields.io/badge/License-GPL--2.0-blue.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820/blob/main/COPYING)
-[![Help wanted](https://img.shields.io/badge/Help%20wanted-open%20issues-brightgreen.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues)
+[![Help wanted](https://img.shields.io/badge/Help%20wanted-open%20issues-brightgreen.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues)
 
 Mainline Linux for the 2019 Samsung phones built on the **Exynos 9820**: the Galaxy S10 family (Exynos models). One tree, tested in the open, aimed at upstream.
 
@@ -26,9 +26,9 @@ Exynos models only. The Snapdragon variants (SM-G970U, SM-G973U, SM-G975U) and t
 | | | |
 |---|---|---|
 | 🖥️ Display and touch | framebuffer console, Phosh on the panel, touch hits | [status](https://github.com/omnipha/linux-samsung-s10-exynos9820/blob/main/Documentation/beyond2lte/STATUS.md) |
-| 📡 Wi-Fi | BCM4375, scan, WPA2, SSH over Wi-Fi | [#1](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/1) |
-| 🔵 Bluetooth | controller up, 40 devices discovered | [#15](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/15) |
-| 🎮 GPU | Mali-G76, panfrost, kmscube | [#8](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/8) |
+| 📡 Wi-Fi | BCM4375, scan, WPA2, SSH over Wi-Fi | [#1](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/1) |
+| 🔵 Bluetooth | controller up, 40 devices discovered | [#15](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/15) |
+| 🎮 GPU | Mali-G76, panfrost, kmscube | [#8](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/8) |
 | 🔌 USB | gadget networking and SSH, no cable replug | [recovery](https://github.com/omnipha/linux-samsung-s10-exynos9820/tree/main/Documentation/beyond2lte/recovery) |
 
 ## Help wanted
@@ -37,13 +37,13 @@ These are open and measured against the stock hardware. Pick one.
 
 | | |
 |---|---|
-| 📷 Camera | [#16](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/16) rear main sensor, raw capture |
-| 🔊 Audio | [#17](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/17) speaker and microphone |
-| ☀️ Brightness | [#21](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/21) backlight control |
-| 📶 Mobile data | [#25](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/25) Shannon modem, LTE |
-| 🧭 NFC | [#19](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/19) tag detection |
-| 📐 Sensors | [#18](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/18) orientation |
-| 📍 GPS | [#22](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/22) fixes |
+| 📷 Camera | [#16](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/16) rear main sensor, raw capture |
+| 🔊 Audio | [#17](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/17) speaker and microphone |
+| ☀️ Brightness | [#21](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/21) backlight control |
+| 📶 Mobile data | [#25](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/25) Shannon modem, LTE |
+| 🧭 NFC | [#19](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/19) tag detection |
+| 📐 Sensors | [#18](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/18) orientation |
+| 📍 GPS | [#22](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/22) fixes |
 
 Own an S10e or S10 5G? A boot log from your exact model is useful on its own. Open an issue with the model, the kernel commit and the log. Strip serial numbers, credentials and addresses first.
 
