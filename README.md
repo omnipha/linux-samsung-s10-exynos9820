@@ -1,53 +1,39 @@
-# Linux on the Samsung Exynos 9820
+# Linux for Samsung Exynos 9820
 
-[![Kernel](https://img.shields.io/badge/Kernel-Linux%207.2--rc2-green.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820)
-[![SoC](https://img.shields.io/badge/SoC-Exynos%209820-blue.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820)
-[![Status](https://img.shields.io/badge/Status-active%20bring--up-orange.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues)
-[![License](https://img.shields.io/badge/License-GPL--2.0-blue.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820/blob/main/COPYING)
-[![Help wanted](https://img.shields.io/badge/Help%20wanted-open%20issues-brightgreen.svg)](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues)
+An experimental Linux kernel tree for the Exynos Galaxy S10 family, based on **Linux 7.2-rc2**. This is kernel source, not a complete operating system or an installation image. The Exynos 9820 changes are not yet upstream Linux support.
 
-Mainline Linux for the 2019 Samsung phones built on the **Exynos 9820**: the Galaxy S10 family (Exynos models). One tree, tested in the open, aimed at upstream.
-
-> **Tested so far: one Galaxy S10+ (SM-G975F).** The other models share the SoC and are welcome here, but nothing below has been measured on them.
+Hardware results below come from **one Galaxy S10+ SM-G975F (`beyond2lte`)**, using a postmarketOS-based system and a custom boot setup. They were measured on development kernels; they do not prove that the current `main` commit or another phone has been boot-tested.
 
 ## Devices
 
-| Phone | Model | Codename | In this tree |
+| Device | Exynos model | Codename | Status |
 |---|---|---|---|
-| Galaxy S10e | SM-G970F | `beyond0lte` | not yet |
-| Galaxy S10 | SM-G973F | `beyond1lte` | device tree, untested |
-| Galaxy S10+ | SM-G975F | `beyond2lte` | booting, see below |
-| Galaxy S10 5G | SM-G977B | `beyondx` | not yet |
+| Galaxy S10e | SM-G970F | `beyond0lte` | Not supported by this tree yet |
+| Galaxy S10 | SM-G973F | `beyond1lte` | Device tree present; not tested on hardware |
+| Galaxy S10+ | SM-G975F | `beyond2lte` | Boots with a custom setup; partial support |
+| Galaxy S10 5G | SM-G977B | `beyondx` | Not supported by this tree yet |
 
-Exynos models only. The Snapdragon variants (SM-G970U, SM-G973U, SM-G975U) and the Galaxy S10 Lite (Snapdragon 855) are a different SoC and will not boot this kernel. The Note10 family uses the Exynos 9825, a refresh of the 9820; Samsung's vendor tree builds it from the same platform code. We have not checked it.
+Snapdragon models and the Galaxy S10 Lite use different hardware and are not supported by this tree.
 
-## What already runs on the S10+
+## S10+ hardware status
 
-| | | |
-|---|---|---|
-| 🖥️ Display and touch | framebuffer console, Phosh on the panel, touch hits | [status](https://github.com/omnipha/linux-samsung-s10-exynos9820/blob/main/Documentation/beyond2lte/STATUS.md) |
-| 📡 Wi-Fi | BCM4375, scan, WPA2, SSH over Wi-Fi | [#1](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/1) |
-| 🔵 Bluetooth | controller up, 40 devices discovered | [#15](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/15) |
-| 🎮 GPU | Mali-G76, panfrost, kmscube | [#8](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/8) |
-| 🔌 USB | gadget networking and SSH, no cable replug | [recovery](https://github.com/omnipha/linux-samsung-s10-exynos9820/tree/main/Documentation/beyond2lte/recovery) |
-
-## Help wanted
-
-These are open and measured against the stock hardware. Pick one.
-
-| | |
+| Component | Observed on the test device |
 |---|---|
-| 📷 Camera | [#16](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/16) rear main sensor, raw capture |
-| 🔊 Audio | [#17](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/17) speaker and microphone |
-| ☀️ Brightness | [#21](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/21) backlight control |
-| 📶 Mobile data | [#25](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/25) Shannon modem, LTE |
-| 🧭 NFC | [#19](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/19) tag detection |
-| 📐 Sensors | [#18](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/18) orientation |
-| 📍 GPS | [#22](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/22) fixes |
+| Boot and storage | Linux boots and mounts the root filesystem. Earlier ext4 corruption occurred; long-term storage reliability is not established. |
+| Display and touch | Framebuffer console and Phosh display work; touch input was confirmed. Native display control, brightness and suspend remain unverified. |
+| Wi-Fi | BCM4375 over PCIe: scan, WPA2, DHCP and SSH worked with device-specific firmware and calibration data. |
+| Bluetooth | The controller powered on and discovered nearby devices. Pairing, audio and suspend remain unverified. |
+| GPU | Mali-G76 with Panfrost rendered `kmscube`; thermal throttling and suspend remain unverified. |
+| USB | Gadget networking and SSH worked; automatic data routing was verified on warm boots. USB host/OTG and power-role behavior remain unverified. |
+| Battery and vibration | Battery and charger drivers bound, and a vibration test worked. Charging and haptic behavior are not fully characterized. |
+| Audio | Speaker and microphone cards registered; capture tests passed. Audible playback and call audio remain unverified. |
+| Cameras, mobile network, sensors, GPS and NFC | Not yet verified on this device. Camera register tables are present in the source tree; that is not proof of capture. |
 
-Own an S10e or S10 5G? A boot log from your exact model is useful on its own. Open an issue with the model, the kernel commit and the log. Strip serial numbers, credentials and addresses first.
+The Wi-Fi and Bluetooth tests required device-specific firmware or calibration files not supplied by this repository. Results can differ across hardware revisions. See [hardware status](Documentation/beyond2lte/STATUS.md) and [bring-up evidence](Documentation/beyond2lte/bringup-evidence.md) for exact configurations, measurements and limitations.
 
 ## Build
+
+The documented cross-build uses Clang/LLVM 17, LLD, flex, bison, bc, pahole, development headers for OpenSSL and libelf, and kmod/depmod.
 
 ```sh
 git clone https://github.com/omnipha/linux-samsung-s10-exynos9820.git
@@ -56,12 +42,19 @@ make O=out ARCH=arm64 LLVM=-17 beyond2lte_defconfig
 make -j"$(nproc)" O=out ARCH=arm64 LLVM=-17 Image modules dtbs
 ```
 
-Needs Clang/LLVM 17. Output: `out/arch/arm64/boot/Image` and `out/arch/arm64/boot/dts/exynos/exynos9820-beyond2lte.dtb`. The S10 device tree is built alongside it. The S5K2L4 camera register tables are in `firmware/samsung/s10/`. Details, firmware and the measured results: [Documentation/beyond2lte/STATUS.md](https://github.com/omnipha/linux-samsung-s10-exynos9820/blob/main/Documentation/beyond2lte/STATUS.md).
+The outputs include `out/arch/arm64/boot/Image` and `out/arch/arm64/boot/dts/exynos/exynos9820-beyond2lte.dtb`. The `beyond1lte` device tree is also built but has not been tested on that device. Building is not a boot or hardware test.
 
-There is no installer. Flashing without your own backup and recovery path can wipe the phone.
+There is no general-purpose installer or verified recovery procedure. Bootloader or storage changes can make the phone unbootable or erase data. Verify the exact model, backups and recovery path before changing a device.
 
-## Credits
+## Documentation
 
-Built on [chiffathefox/exynos-9820-mainline-linux](https://github.com/chiffathefox/exynos-9820-mainline-linux). Wi-Fi references: [LineageOS/android_kernel_samsung_exynos9820](https://github.com/LineageOS/android_kernel_samsung_exynos9820/tree/a412cfaf86b980ce35cae96a35f678c8ea551575), [pulpoff/linux-beyond0lte](https://github.com/pulpoff/linux-beyond0lte/tree/3c142b4624f3caf9cb0ee90324ef7d62616d2a64). Thanks to [butztill/s10-linux](https://github.com/butztill/s10-linux/tree/d8135b2465b3a9f1c0e7f1f6be71451ad185b303) for the S10 bring-up notes. Results on another model are not results on this one. Keep SPDX and authorship when adapting code.
+- [Measured S10+ hardware status and build details](Documentation/beyond2lte/STATUS.md)
+- [S10+ bring-up evidence](Documentation/beyond2lte/bringup-evidence.md)
+- [Device-specific recovery material](Documentation/beyond2lte/recovery/)
+- [General Linux kernel README](README)
 
-Kernel license: [COPYING](https://github.com/omnipha/linux-samsung-s10-exynos9820/blob/main/COPYING).
+## Credits and license
+
+The Exynos 9820 foundation builds on [chiffathefox/exynos-9820-mainline-linux](https://github.com/chiffathefox/exynos-9820-mainline-linux). Wi-Fi work used [LineageOS/android_kernel_samsung_exynos9820](https://github.com/LineageOS/android_kernel_samsung_exynos9820/tree/a412cfaf86b980ce35cae96a35f678c8ea551575) and [pulpoff/linux-beyond0lte](https://github.com/pulpoff/linux-beyond0lte/tree/3c142b4624f3caf9cb0ee90324ef7d62616d2a64) as references. Thanks to [butztill/s10-linux](https://github.com/butztill/s10-linux/tree/d8135b2465b3a9f1c0e7f1f6be71451ad185b303) for S10 bring-up work. Results from other devices do not establish S10+ support. Retain authorship, SPDX identifiers and applicable license terms when adapting code.
+
+Kernel licensing information: [COPYING](COPYING).
