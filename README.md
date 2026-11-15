@@ -44,6 +44,8 @@ make -j"$(nproc)" O=out ARCH=arm64 LLVM=-17 Image modules dtbs
 
 The outputs include `out/arch/arm64/boot/Image` and `out/arch/arm64/boot/dts/exynos/exynos9820-beyond2lte.dtb`. The `beyond1lte` device tree is also built but has not been tested on that device. Building is not a boot or hardware test.
 
+Build on a computer or on the phone itself. [Build, download and deployment instructions](Documentation/beyond2lte/build-and-release.md) cover both paths and publishing manually; [downloadable kernel builds](https://github.com/omnipha/linux-samsung-s10-exynos9820/releases) are under Releases. Check each release's device-test status: an Image, device tree and modules are not a complete installer.
+
 There is no general-purpose installer or verified recovery procedure. Bootloader or storage changes can make the phone unbootable or erase data. Verify the exact model, backups and recovery path before changing a device.
 
 ## Documentation
