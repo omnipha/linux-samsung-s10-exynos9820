@@ -143,8 +143,9 @@ may differ. Do not write an `Image` directly to an Android boot partition.
 
    ```sh
    (
-   set -eu
-   REL=7.2.0-rc2-g4debea4f7a67  # use the matching release for another build
+   set -euo pipefail
+   REL=$(basename "$(find lib/modules -mindepth 1 -maxdepth 1 -type d)")
+   test "$(printf '%s\n' "$REL" | wc -l)" -eq 1
    test "$(findmnt -n -o TARGET --target /boot)" = /boot
    test -f boot/Image && test -f boot/exynos9820-beyond2lte.dtb
    test -d "lib/modules/$REL"
@@ -169,7 +170,9 @@ may differ. Do not write an `Image` directly to an Android boot partition.
    copy must fit in `/boot`. A failure may leave partial versioned files; inspect
    them before retrying. Retain a backup before any boot-menu changes.
 3. Prepare a compatible initramfs for that exact release using the target
-   installation's procedure. Early-boot modules and device-specific firmware may
+   installation's procedure. There is no universal initramfs command: it must
+   match the existing boot setup, include this release's modules, and use the
+   compression accepted by that setup. Early-boot modules and device-specific firmware may
    be required there, not only on the root filesystem. Do not publish the
    phone's firmware, calibration data or private initramfs. On the test phone,
    an XZ initramfs using CRC64 failed; see the recovery guide for the measured
