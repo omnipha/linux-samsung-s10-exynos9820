@@ -33,11 +33,18 @@ properties:
       PMU syscon used to confirm that the display power domain is on before
       every display-controller register access.
 
+  samsung,framebuffer:
+    $ref: /schemas/types.yaml#/definitions/phandle
+    description:
+      Simple framebuffer whose DRM connector becomes the parent of the
+      backlight device.
+
 required:
   - compatible
   - reg
   - reg-names
   - samsung,pmu-syscon
+  - samsung,framebuffer
 
 additionalProperties: false
 
@@ -53,4 +60,5 @@ examples:
         reg = <0x19080000 0x300>, <0x19161000 0x800>;
         reg-names = "dsim", "dphy";
         samsung,pmu-syscon = <&pmu>;
+        samsung,framebuffer = <&framebuffer0>;
     };
