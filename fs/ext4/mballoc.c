@@ -4671,14 +4671,14 @@ ext4_mb_normalize_request(struct ext4_allocation_context *ac,
 		 * allocation itself proceeds normally.
 		 */
 		ext4_msg(ac->ac_sb, KERN_ERR,
-			 "start %lu, size %lu, fe_logical %lu, fe_len %u, lleft %u, lright %u, pleft %llu, pright %llu, blocks_per_group %u, falling back to unnormalized request",
+			 "start %lu, size %lu, fe_logical %lu, fe_len %u, lleft %u, lright %u, pleft %llu, pright %llu, blocks_per_group %lu, falling back to unnormalized request",
 			 (unsigned long) start, (unsigned long) size,
 			 (unsigned long) ac->ac_o_ex.fe_logical,
 			 (unsigned int) ac->ac_o_ex.fe_len,
 			 (unsigned int) ar->lleft, (unsigned int) ar->lright,
 			 (unsigned long long) ar->pleft,
 			 (unsigned long long) ar->pright,
-			 EXT4_BLOCKS_PER_GROUP(ac->ac_sb));
+			 (unsigned long) EXT4_BLOCKS_PER_GROUP(ac->ac_sb));
 		return;
 	}
 
