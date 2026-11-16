@@ -4605,12 +4605,26 @@ ext4_mb_normalize_request(struct ext4_allocation_context *ac,
 	if (start + size > EXT_MAX_BLOCKS)
 		size = EXT_MAX_BLOCKS - start;
 
-	/* don't cover already allocated blocks in selected range */
-	if (ar->pleft && start <= ar->lleft) {
-		size -= ar->lleft + 1 - start;
+	/*
+	 * Don't cover already allocated blocks in selected range.
+	 *
+	 * The neighbour logical block numbers are ext4_lblk_t, so
+	 * "ar->lleft + 1" wraps to 0 when ar->lleft is EXT_MAX_BLOCKS,
+	 * which would move "start" below ac->ac_o_ex.fe_logical and
+	 * produce a range that does not contain the original request.
+	 * In a consistent state ar->lleft is the last block before the
+	 * request (so ar->lleft < ac->ac_o_ex.fe_logical) and ar->lright
+	 * is the first block after it (so ar->lright >
+	 * ac->ac_o_ex.fe_logical); skip the trim otherwise instead of
+	 * building a bogus range out of corrupt neighbour values.
+	 */
+	if (ar->pleft && start <= ar->lleft &&
+	    ar->lleft < ac->ac_o_ex.fe_logical) {
+		size -= (loff_t)ar->lleft + 1 - start;
 		start = ar->lleft + 1;
 	}
-	if (ar->pright && start + size - 1 >= ar->lright)
+	if (ar->pright && ar->lright > ac->ac_o_ex.fe_logical &&
+	    start + size - 1 >= ar->lright)
 		size -= start + size - ar->lright;
 
 	/*
@@ -4642,14 +4656,31 @@ ext4_mb_normalize_request(struct ext4_allocation_context *ac,
 	 * (See ext4_mb_use_inode_pa() for more details)
 	 */
 	if (start + size <= ac->ac_o_ex.fe_logical ||
-			start > ac->ac_o_ex.fe_logical) {
+			start > ac->ac_o_ex.fe_logical ||
+			size <= 0 ||
+			size > EXT4_BLOCKS_PER_GROUP(ac->ac_sb)) {
+		/*
+		 * The normalized range does not contain the original
+		 * request.  This is not reachable from consistent state -
+		 * it means we are looking at a corrupt allocation request
+		 * or corrupt neighbour block numbers.  Never kill the
+		 * machine over it: log the full context and fall back to
+		 * the original request (ac->ac_g_ex stays == ac->ac_o_ex
+		 * as set up by ext4_mb_initialize_context), so no
+		 * preallocation is requested for this request and the
+		 * allocation itself proceeds normally.
+		 */
 		ext4_msg(ac->ac_sb, KERN_ERR,
-			 "start %lu, size %lu, fe_logical %lu",
+			 "start %lu, size %lu, fe_logical %lu, fe_len %u, lleft %u, lright %u, pleft %llu, pright %llu, blocks_per_group %u, falling back to unnormalized request",
 			 (unsigned long) start, (unsigned long) size,
-			 (unsigned long) ac->ac_o_ex.fe_logical);
-		BUG();
+			 (unsigned long) ac->ac_o_ex.fe_logical,
+			 (unsigned int) ac->ac_o_ex.fe_len,
+			 (unsigned int) ar->lleft, (unsigned int) ar->lright,
+			 (unsigned long long) ar->pleft,
+			 (unsigned long long) ar->pright,
+			 EXT4_BLOCKS_PER_GROUP(ac->ac_sb));
+		return;
 	}
-	BUG_ON(size <= 0 || size > EXT4_BLOCKS_PER_GROUP(ac->ac_sb));
 
 	/* now prepare goal request */
 
