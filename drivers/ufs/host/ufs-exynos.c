@@ -2048,6 +2048,8 @@ static int exynos_ufs_resume(struct ufs_hba *hba, enum ufs_pm_op pm_op)
 	if (!ufshcd_is_link_active(hba))
 		phy_power_on(ufs->phy);
 
+	/* sysreg shareability is lost across SoC sleep */
+	exynos_ufs_shareability(ufs);
 	exynos_ufs_config_smu(ufs);
 	exynos_ufs_fmp_resume(hba);
 	return 0;
