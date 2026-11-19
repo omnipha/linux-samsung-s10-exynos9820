@@ -1132,7 +1132,6 @@
 			phys = <&ufs_phy>;
 			phy-names = "ufs-phy";
 
-			dma-coherent;
 			samsung,sysreg = <&sysreg_fsys1 0x700>;
 
 			status = "disabled";
