@@ -1,0 +1,56 @@
+#!/bin/sh
+# Capture one raw frame from the rear main S5K2L4 sensor on beyond2lte.
+#
+# Runs after boot on the camera kernel: it loads the camera modules, waits
+# for the sensor to be probed and then writes one raw frame, its SHA-256 and
+# the statistics to /root/s5k2l4-capture.log.  The frame itself stays in
+# /root (private), only the numbers are reported.
+#
+# SPDX-License-Identifier: GPL-2.0
+
+LOG=/root/s5k2l4-capture.log
+BIN=/usr/local/bin/s5k2l4-capture
+
+exec >>"$LOG" 2>&1
+
+echo "=== $(date -u '+%F %T') s5k2l4 capture start ==="
+uname -r
+
+for m in s10-isppre-hold s10-isppre-clock s10-s2mpb02 s10-s2mpb03 s10-cis-clock s5k-cis exynos9820-csis; do
+    echo "--- modprobe $m"
+    modprobe "$m"
+    echo "    rc=$?"
+done
+
+ls -la /dev/video* /dev/media* /dev/v4l-subdev* 2>/dev/null
+
+echo "--- dmesg camera lines"
+dmesg | grep -iE "s5k|csis|s2mpb|isppre|camera" | tail -40
+
+if [ ! -x "$BIN" ]; then
+    echo "FAIL: $BIN missing"
+    exit 1
+fi
+
+for i in 1 2 3 4 5 6 7 8 9 10; do
+    if [ -e /dev/video0 ]; then
+        break
+    fi
+    echo "--- waiting for /dev/video0 ($i)"
+    sleep 3
+done
+
+# 4032x3024 needs 4 x 23.3 MiB of CMA (min_reqbufs_allocation = 4) and does
+# not fit in the 60 MiB CMA region; 2016x1512 needs 4 x 6.1 MiB.
+"$BIN" /root/s5k2l4-frame.raw 2016 1512 4
+rc=$?
+echo "=== capture rc=$rc ==="
+
+if [ $rc -ne 0 ]; then
+    echo "--- retry full resolution"
+    "$BIN" /root/s5k2l4-frame-full.raw 4032 3024 4
+    echo "=== full-res capture rc=$? ==="
+fi
+
+dmesg | grep -iE "s5k|csis|s2mpb|isppre|camera" | tail -40
+echo "=== $(date -u '+%F %T') s5k2l4 capture end ==="
