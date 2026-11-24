@@ -1982,6 +1982,7 @@ static int exynos_ufs_negotiate_pwr_mode(struct ufs_hba *hba,
 	/* This driver only support symmetric gear setting e.g. hs_tx_gear == hs_rx_gear */
 	host_params.hs_tx_gear = exynos_ufs_get_hs_gear(hba);
 	host_params.hs_rx_gear = exynos_ufs_get_hs_gear(hba);
+	ufshcd_parse_gear_limits(hba, &host_params);
 
 	return ufshcd_negotiate_pwr_params(&host_params, dev_max_params, dev_req_params);
 }
