@@ -78,7 +78,6 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL0>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&ananke_cpu_sleep>;
 			capacity-dmips-mhz = <272>;
 			dynamic-power-coefficient = <160>;
 			operating-points-v2 = <&cpucl0_opp_table>;
@@ -91,7 +90,6 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL0>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&ananke_cpu_sleep>;
 			capacity-dmips-mhz = <272>;
 			dynamic-power-coefficient = <160>;
 			operating-points-v2 = <&cpucl0_opp_table>;
@@ -104,7 +102,6 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL0>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&ananke_cpu_sleep>;
 			capacity-dmips-mhz = <272>;
 			dynamic-power-coefficient = <160>;
 			operating-points-v2 = <&cpucl0_opp_table>;
@@ -117,7 +114,6 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL0>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&ananke_cpu_sleep>;
 			capacity-dmips-mhz = <272>;
 			dynamic-power-coefficient = <160>;
 			operating-points-v2 = <&cpucl0_opp_table>;
@@ -130,7 +126,6 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL1>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&prometheus_cpu_sleep>;
 			capacity-dmips-mhz = <531>;
 			dynamic-power-coefficient = <320>;
 			operating-points-v2 = <&cpucl1_opp_table>;
@@ -143,7 +138,6 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL1>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&prometheus_cpu_sleep>;
 			capacity-dmips-mhz = <531>;
 			dynamic-power-coefficient = <320>;
 			operating-points-v2 = <&cpucl1_opp_table>;
@@ -156,7 +150,6 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL2>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&cheetah_cpu_sleep>;
 			capacity-dmips-mhz = <785>;
 			dynamic-power-coefficient = <760>;
 			operating-points-v2 = <&cpucl2_opp_table>;
@@ -169,13 +162,13 @@
 			clocks = <&acpm_ipc EXYNOS9820_CLK_ACPM_DVFS_CPUCL2>;
 			#cooling-cells = <2>;
 			enable-method = "psci";
-			cpu-idle-states = <&cheetah_cpu_sleep>;
 			capacity-dmips-mhz = <785>;
 			dynamic-power-coefficient = <760>;
 			operating-points-v2 = <&cpucl2_opp_table>;
 		};
 
 		idle-states {
+			status = "disabled";
 			entry-method = "psci";
 
 			ananke_cpu_sleep: cpu-ananke-sleep {
@@ -358,48 +351,56 @@
 			opp-hz = /bits/ 64 <1586000000>;
 			opp-microvolt = <793750>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-1690000000 {
 			opp-hz = /bits/ 64 <1690000000>;
 			opp-microvolt = <818750>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-1794000000 {
 			opp-hz = /bits/ 64 <1794000000>;
 			opp-microvolt = <850000>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-1898000000 {
 			opp-hz = /bits/ 64 <1898000000>;
 			opp-microvolt = <893750>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2002000000 {
 			opp-hz = /bits/ 64 <2002000000>;
 			opp-microvolt = <918750>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2106000000 {
 			opp-hz = /bits/ 64 <2106000000>;
 			opp-microvolt = <956250>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2210000000 {
 			opp-hz = /bits/ 64 <2210000000>;
 			opp-microvolt = <1006250>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2314000000 {
 			opp-hz = /bits/ 64 <2314000000>;
 			opp-microvolt = <1056250>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 	};
 
@@ -483,42 +484,49 @@
 			opp-hz = /bits/ 64 <1820000000>;
 			opp-microvolt = <793750>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-1976000000 {
 			opp-hz = /bits/ 64 <1976000000>;
 			opp-microvolt = <837500>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2080000000 {
 			opp-hz = /bits/ 64 <2080000000>;
 			opp-microvolt = <868750>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2236000000 {
 			opp-hz = /bits/ 64 <2236000000>;
 			opp-microvolt = <906250>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2340000000 {
 			opp-hz = /bits/ 64 <2340000000>;
 			opp-microvolt = <931250>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2470000000 {
 			opp-hz = /bits/ 64 <2470000000>;
 			opp-microvolt = <987500>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		opp-2530000000 {
 			opp-hz = /bits/ 64 <2530000000>;
 			opp-microvolt = <1018750>;
 			clock-latency-ns = <500000>;
+			status = "disabled";
 		};
 
 		/*

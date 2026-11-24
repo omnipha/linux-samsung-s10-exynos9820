@@ -71,6 +71,16 @@
 };
 
 &gpu {
+	mali-supply = <&reg_dummy>;
+	status = "okay";
+};
+
+&ufs {
+	vdd-hba-supply = <&reg_dummy>;
+	vcc-supply = <&reg_dummy>;
+	vccq-supply = <&reg_dummy>;
+	vccq2-supply = <&reg_dummy>;
+	limit-hs-gear = <2>;
 	status = "okay";
 };
 
