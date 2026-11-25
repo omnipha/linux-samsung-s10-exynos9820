@@ -58,6 +58,13 @@ An experimental port based on `b74704a41343` booted on this S10+ on 2026-11-13. 
 
 A subsequent reboot after changing the initramfs did not regain USB or WLAN access; no kernel journal from that attempt was available. The owner reported a visible desktop, then recovered via Safe Mode. The previously verified Bluetooth boot entry was restored; the cause of the failed reboot attempt remains unknown.
 
+During camera bring-up on 2026-11-25, the sensor stack was probed on this SM-G975F:
+- Sensor chip-ID read: `s5k-cis 5-0010: s5k2l4: model 0x20c4 revision 0xa102` at I2C address `0x10` on bus `10860000.i2c` (`i2c-5`).
+- CSIS receiver: `exynos9820-csis 17030000.camera-csis` bound to `/dev/video0` (subdev `/dev/v4l-subdev0`, sensor `/dev/v4l-subdev1`, media node `/dev/media0`).
+- Camera power & clocks: S2MPB02 probed at `0x59` on `i2c-4` (ID `0x00`, BUCK1 1.3 V); S2MPB03 probed at `0x56` on `i2c-3` (ID `0x02`, LDO1–LDO7); `s10-cis0-output` clock registered; ISPPRE power domain held active and bus clocked at 25 MHz (`s10-isppre-hold`, `s10-isppre-clock`).
+- CMA memory: 4 buffers at 4032×3024 require ~97.6 MiB exceeding the default 60 MiB CMA region (`dma alloc of size 24387584 failed`); 2016×1512 requires 4 × 6.1 MiB (24.4 MiB) fitting within CMA.
+- Capture helper: `s5k2l4-capture` was diagnosed for early-boot signal 11 segfaults (`find_v4l_dev()` static buffer aliasing, `name[-1]` stack underflow on zero-length sysfs read, and `de->d_name` use-after-free after `closedir()`). Fixed with dynamic allocation, proper bounds checking, 5 s early-boot device polling retry, comprehensive error-path resource cleanup, and sensor exposure/gain controls.
+
 ## Camera power (rear main, S5K2L4)
 
 Source: stock overlay 09 (`ro.boot.dtbo_idx` = 9) for the regulators, and the Samsung 4.14 driver `fimc-is-device-module-2l4.c` (LineageOS commit `4bcfb0263b21`) for the order. This is stock data, not a voltage measurement on this unit.
