@@ -49,6 +49,71 @@
 	};
 };
 
+&acpm_ipc {
+	pmic-1 {
+		regulators {
+			buck2m: buck2m {
+				regulator-name = "m_vdd_buck2";
+				regulator-min-microvolt = <450000>;
+				regulator-max-microvolt = <1300000>;
+				regulator-ramp-delay = <6000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck3m: buck3m {
+				regulator-name = "m_vdd_buck3";
+				regulator-min-microvolt = <450000>;
+				regulator-max-microvolt = <1300000>;
+				regulator-ramp-delay = <6000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+
+			buck4m: buck4m {
+				regulator-name = "m_vdd_buck4";
+				regulator-min-microvolt = <450000>;
+				regulator-max-microvolt = <1300000>;
+				regulator-ramp-delay = <6000>;
+				regulator-always-on;
+				regulator-boot-on;
+			};
+		};
+	};
+};
+
+&cpu0 {
+	cpu-supply = <&buck4m>;
+};
+
+&cpu1 {
+	cpu-supply = <&buck4m>;
+};
+
+&cpu2 {
+	cpu-supply = <&buck4m>;
+};
+
+&cpu3 {
+	cpu-supply = <&buck4m>;
+};
+
+&cpu4 {
+	cpu-supply = <&buck3m>;
+};
+
+&cpu5 {
+	cpu-supply = <&buck3m>;
+};
+
+&cpu6 {
+	cpu-supply = <&buck2m>;
+};
+
+&cpu7 {
+	cpu-supply = <&buck2m>;
+};
+
 &battery {
 	compatible = "simple-battery";
 	constant-charge-current-max-microamp = <2850000>;
