@@ -221,6 +221,7 @@ int main(int argc, char **argv)
 	unsigned int want_w = 4032, want_h = 3024;
 	unsigned int bufcount = 4;
 	int want_exposure = -1, want_gain = -1;
+	unsigned int skip_frames = 2;
 	char *s5k_path = NULL, *csis_path = NULL, *vid_path = NULL;
 	int s5k_fd = -1, csis_fd = -1, vid_fd = -1, out_fd = -1;
 	struct v4l2_capability cap;
@@ -236,7 +237,7 @@ int main(int argc, char **argv)
 	unsigned int i;
 	int n, ret = 0;
 	ssize_t w;
-	const char *env_exp, *env_gain;
+	const char *env_exp, *env_gain, *env_skip;
 
 	if (argc > 3) {
 		want_w = (unsigned int)strtoul(argv[2], NULL, 0);
@@ -260,6 +261,9 @@ int main(int argc, char **argv)
 		want_gain = (int)strtol(argv[6], NULL, 0);
 	else if ((env_gain = getenv("S5K2L4_GAIN")) != NULL)
 		want_gain = (int)strtol(env_gain, NULL, 0);
+
+	if ((env_skip = getenv("S5K2L4_SKIP")) != NULL)
+		skip_frames = (unsigned int)strtoul(env_skip, NULL, 0);
 
 	fprintf(stderr, "requested %ux%u with %u buffers\n", want_w, want_h,
 		bufcount);
@@ -444,6 +448,17 @@ int main(int argc, char **argv)
 			fprintf(stderr, "DQBUF: %s\n", strerror(errno));
 			ret = 14;
 			goto streamoff;
+		}
+		if (skip_frames > 0) {
+			fprintf(stderr, "skipping warmup frame (index %u sequence %u, %u remaining)\n",
+				buf.index, buf.sequence, skip_frames);
+			if (ioctl(vid_fd, VIDIOC_QBUF, &buf) < 0) {
+				fprintf(stderr, "QBUF warmup: %s\n", strerror(errno));
+				ret = 12;
+				goto streamoff;
+			}
+			skip_frames--;
+			continue;
 		}
 		break;
 	}
