@@ -6,7 +6,7 @@ The original S10 port [butztill/s10-linux](https://github.com/butztill/s10-linux
 
 ## Status measured on this device (2026-11-13)
 
-- Bluetooth: the controller came up and a scan found 40 devices after boot. PR [#23](https://github.com/omnipha/linux-samsung-s10-exynos9820/pull/23), issue [#15](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/15).
+- Bluetooth: the controller came up and a scan found 40 devices after boot. PR [#23](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/pull/23), issue [#15](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/15).
 - Phosh/Phoc 0.58: with simple-framebuffer output `Unknown-1` at 1440×3040 and scale 3, `wlr-randr --output Unknown-1 --transform 90` rotated the UI. The owner confirmed touch still hit the intended targets; `--transform normal` restored the original orientation. Automatic rotation remains unavailable until an orientation provider exists. Reboot persistence was not tested.
 - No sound card (`/proc/asound/cards`), `/dev/video*`, `/dev/media*`, backlight device, IIO sensor, GNSS device or NFC class device was exposed in that boot. `CONFIG_GNSS=y` and `CONFIG_SPI_SPIDEV=y`, but neither proves a device is bound.
 
@@ -48,7 +48,7 @@ Two independent `last_kmsg` captures from this SM-G975F, both identifying `BEYON
 - Panel: ID `0x00A11013` selected `s6e3ha9_beyond2`, 1440×3040. The intact log then selected `s6e3ha9_beyond2_a3_s0_default`, ID `0xA01010`, revision 2. The second log's corresponding line is byte-corrupted. Stock brightness notifications occurred, but no AOR curve was read from the panel.
 - Camera: the `fimc-is_sensor_2l4@20` module probed. `power_seq_id` failed with `-22`. `cis_2l4_probe` reported sensor ID 0, f-number 150 and `setfile_A`, then completed. That is not a read of model ID `0x20c4`.
 
-## Camera — [#16](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/16)
+## Camera — [#4](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/4)
 
 The stock S10+ DTBO describes `fimc-is-2l4@10` at `reg = <0x10>` on `hsi2c0` (`0x10860000`); reset is `gpg2-6` and MCLK is `gpc1-4`. The associated `fimc-is_sensor_2l4@20` node names sensor channel 0. No camera lane count was established from that stock sensor node. The four-lane camera graph in the reference DTS is for `beyond1lte` and must be verified here.
 
@@ -76,7 +76,7 @@ Stock power-on order for the 2L4: reset low; `VDDD_RET` set to 1.025 V; `VDDA_2.
 
 Caveats: the stock logs from this unit show `power_seq_id read is fail(-22)`, so the driver used its default sequence. The reference DTS for `beyond1lte` wires the same S2MPB03 names to the sensor (`retention-supply`, `avdd28-supply`, `avdd24-supply`, `core-supply`, `iovdd-supply`, `vddq-supply`). The S10+ PMIC parent bus and the real voltages at the sensor are still to be measured once the PMIC probes.
 
-## Audio — [#17](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/17)
+## Audio — [#17](https://github.com/omnipha/linux-samsung-s10-exynos9820-fork-chiffathefox/issues/17)
 
 Stock DT describes a CS47L93 at SPI2 (`0x10470000`, reset `gpg1-0`) and two CS35L40 amplifiers at I2C38 (`0x109a0000`) addresses `0x40` and `0x41`, resets `gph1-1` and `gph1-2`. The stock kernel on this unit read CS47L93 silicon revision 1 at `spi2.0` and then logged `BOOT_DONE`. Mainline registers both CS47L92 and CS47L93 under the component name `cs47l92-codec`, so that name is not evidence of a different part. The same logs identify both amplifiers as `Cirrus Logic CS35L41 (35a40), Revision: A0` at stock I2C addresses `11-0040` and `11-0041`. Their DT compatible string remains `cirrus,cs35l40`, which does not match the silicon ID. The reference [audio implementation](https://github.com/butztill/s10-linux/tree/d8135b2465b3a9f1c0e7f1f6be71451ad185b303/drivers/s10-abox-asoc) reports playback on `beyond1lte`; its `s10-abox-session` source warns that switching the AUD domain off after UAIF use can hang the system. The reference microphone card hard-codes the shared mainline component name `cs47l92-codec`. On this unit the compatible is `cirrus,cs47l93` and the stock probe reports CS47L93 rev 1, so the device type stays CS47L93.
 
@@ -100,17 +100,17 @@ The microphone card's world-readable `codec_regs` attribute was removed in `7f58
 
 Bus numbers: the amplifier bus renumbered the touch and MAX77705 adapters and sent `mb007-muic-route.service` into a restart loop on the first audio boot. `i2c0` to `i2c2` aliases in the board DTS pin touch as 0, MAX77705 as 1 and the amplifiers as 2, and the unit now skips when a kernel driver is bound to `1-0025`. After the next reboot the unit stayed inactive with 0 restarts and there were no EXT4 errors. The same three loader entries were present, and `nftables.service` and `systemd-vconsole-setup.service` failed as they had on earlier boots; the FAT dirty-volume message is a kernel warning printed on every checked boot. Phosh and phoc were seen running; touch input and Wi-Fi throughput were not re-tested.
 
-## Sensor hub and GNSS — [#18](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/18), [#22](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/22)
+## Sensor hub and GNSS — [#5](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/5), [#8](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/8)
 
 Stock DT names `ssp,BCM4773` on SPI17 (`0x10970000`), mode 3, max 25 MHz. Its pinctrl group for GPS power selects `gpg0-2`, but the separate GPIO property refers to a local pinctrl node instead of a GPIO controller: the stock hub probe resolved `ssp-gps-pwr-en` to GPIO 145 and logged a separate `ssp-pwr-en=-2`. Those are stock GPIO numbers, not the mainline bases. Stock vendor-image strings name `LSM6DSO`, `AK09918C` and `LPS22H`; those strings are not in this unit's two recovery logs, so they remain unproven here. The same logs do record accelerometer position 4 and magnetometer position 7.
 
 The reference [sensor service](https://github.com/butztill/s10-linux/tree/d8135b2465b3a9f1c0e7f1f6be71451ad185b303/userspace/sensors) publishes SensorProxy orientation after hub initialization. Its [GNSS stack](https://github.com/butztill/s10-linux/tree/d8135b2465b3a9f1c0e7f1f6be71451ad185b303/userspace/gnss) reports fixes on `beyond1lte` with external proprietary Android daemons; that is not an open standalone GNSS implementation.
 
-## NFC — [#19](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/19)
+## NFC — [#6](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/6)
 
 Stock DT calls the device `sec-nfc@27` on I2C20 (`0x108e0000`). Stock Android reports board revision 26 for this unit (read from a read-only ADB backup); stock overlay 09 covers revisions 26-255, so it is the matching overlay. There, enable is `gpp6-2` and firmware-mode is `gpp6-3`. Overlays 00-08 use other pins (PCAL6524 expander indices `0x0b`/`0x09` in 00-03). Stock Android reported `ro.boot.dtbo_idx` = 9 (read-only ADB backup), so overlay 09 was the one selected on this unit. The S10 reference instead uses `samsung,s3fwrn5-i2c`; compatibility must be validated.
 
-## Brightness — [#21](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/21)
+## Brightness — [#7](https://github.com/omnipha/linux-samsung-s10-exynos9820/issues/7)
 
 The stock display description names panel `s6e3ha9_beyond2_a3_s0_default`. The S10 reference DECON driver uses `Beyond1 A3 S0` brightness/AOR points, not a validated S10+ curve. S10+ panel and dimming sources are available in the [pinned LineageOS Exynos 9820 kernel](https://github.com/LineageOS/android_kernel_samsung_exynos9820/tree/4bcfb0263b21b553760a3bdce542452db3184820/drivers/video/fbdev/exynos/panel/s6e3ha9).
 

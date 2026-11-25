@@ -83,6 +83,11 @@
 			no-map;
 		};
 
+		ect@95000000 {
+			reg = <0x0 0x95000000 0x3a000>;
+			no-map;
+		};
+
 		secure_camera@96000000 {
 			reg = <0x0 0x96000000 0x2200000>;
 			no-map;
@@ -103,6 +108,21 @@
 			no-map;
 		};
 
+		debug_snapshot_pstore@eb308000 {
+			reg = <0x0 0xeb308000 0x8000>;
+			no-map;
+		};
+
+		debug_snapshot_s2d@eb310000 {
+			reg = <0x0 0xeb310000 0x1500000>;
+			no-map;
+		};
+
+		debug_snapshot_arraydump@ec810000 {
+			reg = <0x0 0xec810000 0xa00000>;
+			no-map;
+		};
+
 		modem_if@f0000000 {
 			reg = <0x0 0xf0000000 0xb900000>;
 			no-map;
@@ -110,6 +130,59 @@
 
 		cp_ram_logging@fb900000 {
 			reg = <0x0 0xfb900000 0x2000000>;
+			no-map;
+		};
+
+		debug_snapshot_header@fd900000 {
+			reg = <0x0 0xfd900000 0x10000>;
+			no-map;
+		};
+
+		ramoops@fd910000 {
+			compatible = "ramoops";
+			reg = <0x0 0xfd910000 0x200000>;
+			record-size = <0x40000>;
+			console-size = <0x40000>;
+			pmsg-size = <0x40000>;
+		};
+
+		debug_snapshot_platform@fdb10000 {
+			reg = <0x0 0xfdb10000 0x400000>;
+			no-map;
+		};
+
+		debug_snapshot_sfr@fdf10000 {
+			reg = <0x0 0xfdf10000 0x100000>;
+			no-map;
+		};
+
+		debug_snapshot_cachedump@fe010000 {
+			reg = <0x0 0xfe010000 0xa00000>;
+			no-map;
+		};
+
+		debug_snapshot_etm@fea10000 {
+			reg = <0x0 0xfea10000 0x100000>;
+			no-map;
+		};
+
+		debug_snapshot_bcm@feb10000 {
+			reg = <0x0 0xfeb10000 0x400000>;
+			no-map;
+		};
+
+		debug_snapshot_llc@fef10000 {
+			reg = <0x0 0xfef10000 0x400000>;
+			no-map;
+		};
+
+		debug_snapshot_dbgc@ff310000 {
+			reg = <0x0 0xff310000 0xf0000>;
+			no-map;
+		};
+
+		debug_snapshot_kevents@ff400000 {
+			reg = <0x0 0xff400000 0xc00000>;
 			no-map;
 		};
 
@@ -123,6 +196,8 @@
 	reg_dummy: regulator-0 {
 		compatible = "regulator-fixed";
 		regulator-name = "dummy_reg";
+		regulator-always-on;
+		regulator-boot-on;
 	};
 
 	vib_regulator: gpio-regulator {

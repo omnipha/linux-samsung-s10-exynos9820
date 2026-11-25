@@ -149,7 +149,6 @@ static struct cpufreq_driver dt_cpufreq_driver = {
 	.offline = cpufreq_offline,
 	.register_em = cpufreq_register_em_with_opp,
 	.name = "cpufreq-dt",
-	.set_boost = cpufreq_boost_set_sw,
 	.suspend = cpufreq_generic_suspend,
 };
 
