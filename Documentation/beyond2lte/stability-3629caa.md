@@ -35,6 +35,14 @@ Observations that are not explained yet:
 - Boot log shows `Mismatched cache type (CTR_EL0)` and `Unsupported CPU feature variation` between the boot CPU and CPU6.
 - The long ext4 crash needed about 90 min of load; 63 min without a crash is not a pass.
 
+## Proven root-cause mechanism: unreserved firmware debug_snapshot regions (#44)
+
+Physical address analysis of the incident crash dumps and KASAN logs proved direct overlap between corrupted kernel/userspace pages and omitted downstream `debug_snapshot` regions:
+- `buffer_head` SLUB corruption (padding, redzone, poison 0x6b overwritten in `prev1.kernel.log.gz` at VA `0xffffff807f43a000`..`0xffffff807f4bdfff` -> PA `0xff43a000`..`0xff4bdfff`, and KASAN panic at VA `0xffffff807f86f3e4` -> PA `0xff86f3e4`) falls directly inside `debug_snapshot.log_kevents` (`0xff400000`–`0xffffffff`, 12 MiB).
+- `BUG: Bad page map` in `coredump-worke` (`pte:00000008` with pgd `0xfefed000` and pmd `0xfefee000` in `dmesg-ramoops-2`..`5`) falls directly inside `debug_snapshot.log_llc` (`0xfef10000`–`0xff30ffff`, 4 MiB).
+
+Because these downstream `debug_snapshot` regions (and lower block `0xeb308000`–`0xed210000` plus `ect` at `0x95000000`) were missing from `exynos9820-common.dtsi`, the kernel allocated regular kernel slab objects and user page tables within firmware logging buffers, which Samsung EL3/firmware overwrote asynchronously under system load. Adding these regions to `reserved-memory` with `no-map` prevents Linux from allocating in firmware logging space.
+
 ## Not yet verified
 
 - Sustained ext4 write load (hours) on MB007 and on MB013.
