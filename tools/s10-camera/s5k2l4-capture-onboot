@@ -42,6 +42,10 @@ done
 
 # 4032x3024 needs 4 x 23.3 MiB of CMA (min_reqbufs_allocation = 4) and does
 # not fit in the 60 MiB CMA region; 2016x1512 needs 4 x 6.1 MiB.
+export S5K2L4_SKIP=3
+export S5K2L4_EXPOSURE=2000
+export S5K2L4_GAIN=256
+
 "$BIN" /root/s5k2l4-frame.raw 2016 1512 4
 rc=$?
 echo "=== capture rc=$rc ==="
@@ -50,6 +54,12 @@ if [ $rc -ne 0 ]; then
     echo "--- retry full resolution"
     "$BIN" /root/s5k2l4-frame-full.raw 4032 3024 4
     echo "=== full-res capture rc=$? ==="
+fi
+
+if [ -f /boot/ubootefi.var.orig ]; then
+    echo "--- restoring original /boot/ubootefi.var"
+    cp -f /boot/ubootefi.var.orig /boot/ubootefi.var
+    sync
 fi
 
 dmesg | grep -iE "s5k|csis|s2mpb|isppre|camera" | tail -40
