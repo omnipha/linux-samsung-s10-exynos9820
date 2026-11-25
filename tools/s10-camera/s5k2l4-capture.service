@@ -1,0 +1,20 @@
+[Unit]
+Description=Capture one raw frame from the rear main S5K2L4 camera
+After=systemd-modules-load.service
+Wants=systemd-modules-load.service
+# Only run on kernels that ship the exynos9820-camera stack (s5k-cis,
+# exynos9820-csis).  On every other kernel the sensor never probes,
+# /dev/video0 never appears and the old unit burned ~30 s of boot time.
+# %v expands to the running kernel release.
+ConditionPathExistsGlob=/lib/modules/%v/kernel/drivers/media/platform/samsung/exynos9820-camera/s5k-cis.ko*
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/s5k2l4-capture-onboot
+TimeoutStartSec=300
+StandardOutput=journal
+StandardError=journal
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
