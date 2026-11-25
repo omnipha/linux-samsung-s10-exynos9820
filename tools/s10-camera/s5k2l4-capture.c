@@ -150,12 +150,12 @@ static void sha256_final(struct sha256_ctx *c, uint8_t out[32])
 /*
  * Read /sys/class/video4linux/<node>/name for every node and return the
  * /dev/<node> path whose name contains @needle, or NULL when not found.
+ * The returned string is dynamically allocated; the caller must free it.
  */
 static char *find_v4l_dev(const char *needle)
 {
 	DIR *d = opendir("/sys/class/video4linux");
 	struct dirent *de;
-	static char path[256];
 
 	if (!d)
 		return NULL;
@@ -174,12 +174,14 @@ static char *find_v4l_dev(const char *needle)
 		len = fread(name, 1, sizeof(name) - 1, f);
 		fclose(f);
 		name[len] = '\0';
-		if (name[len ? len - 1 : 0] == '\n')
+		if (len && name[len - 1] == '\n')
 			name[len - 1] = '\0';
 		if (strstr(name, needle)) {
-			closedir(d);
+			char path[256];
+
 			snprintf(path, sizeof(path), "/dev/%s", de->d_name);
-			return path;
+			closedir(d);
+			return strdup(path);
 		}
 	}
 	closedir(d);
@@ -218,6 +220,23 @@ int main(int argc, char **argv)
 	const char *outfile = argc > 1 ? argv[1] : "/root/s5k2l4-frame.raw";
 	unsigned int want_w = 4032, want_h = 3024;
 	unsigned int bufcount = 4;
+	int want_exposure = -1, want_gain = -1;
+	char *s5k_path = NULL, *csis_path = NULL, *vid_path = NULL;
+	int s5k_fd = -1, csis_fd = -1, vid_fd = -1, out_fd = -1;
+	struct v4l2_capability cap;
+	struct v4l2_format fmt;
+	struct v4l2_requestbuffers req;
+	struct v4l2_buffer buf;
+	struct buffer *bufs = NULL;
+	struct sha256_ctx sha;
+	uint8_t digest[32];
+	unsigned char *data = NULL;
+	size_t size = 0;
+	double sum = 0.0, var = 0.0;
+	unsigned int i;
+	int n, ret = 0;
+	ssize_t w;
+	const char *env_exp, *env_gain;
 
 	if (argc > 3) {
 		want_w = (unsigned int)strtoul(argv[2], NULL, 0);
@@ -231,48 +250,89 @@ int main(int argc, char **argv)
 		bufcount = (unsigned int)strtoul(argv[4], NULL, 0);
 	if (bufcount < 2)
 		bufcount = 2;
+
+	if (argc > 5)
+		want_exposure = (int)strtol(argv[5], NULL, 0);
+	else if ((env_exp = getenv("S5K2L4_EXPOSURE")) != NULL)
+		want_exposure = (int)strtol(env_exp, NULL, 0);
+
+	if (argc > 6)
+		want_gain = (int)strtol(argv[6], NULL, 0);
+	else if ((env_gain = getenv("S5K2L4_GAIN")) != NULL)
+		want_gain = (int)strtol(env_gain, NULL, 0);
+
 	fprintf(stderr, "requested %ux%u with %u buffers\n", want_w, want_h,
 		bufcount);
-	char *s5k_path, *csis_path, *vid_path;
-	int s5k_fd = -1, csis_fd = -1, vid_fd = -1;
-	struct v4l2_capability cap;
-	struct v4l2_format fmt;
-	struct v4l2_requestbuffers req;
-	struct v4l2_buffer buf;
-	struct buffer *bufs = NULL;
-	struct sha256_ctx sha;
-	uint8_t digest[32];
-	unsigned char *data = NULL;
-	size_t size = 0;
-	double sum = 0.0, var = 0.0;
-	unsigned int i;
-	int n;
-	int out_fd;
-	ssize_t w;
 
-	s5k_path = find_v4l_dev("s5k2l4 ");
-	csis_path = find_v4l_dev("csis-");
-	vid_path = find_v4l_dev("exynos9820-csis capture");
+	/* Allow up to 5 seconds for subdevs and capture nodes to appear */
+	for (n = 0; n < 10; n++) {
+		if (!s5k_path)
+			s5k_path = find_v4l_dev("s5k2l4 ");
+		if (!csis_path)
+			csis_path = find_v4l_dev("csis-");
+		if (!vid_path)
+			vid_path = find_v4l_dev("exynos9820-csis capture");
+		if (s5k_path && csis_path && vid_path)
+			break;
+		if (n == 0 && (!s5k_path || !csis_path || !vid_path))
+			fprintf(stderr, "waiting for v4l devices...\n");
+		usleep(500000);
+	}
 
 	fprintf(stderr, "sensor: %s\ncsis:   %s\ncapture:%s\n",
 		s5k_path ? s5k_path : "(none)",
 		csis_path ? csis_path : "(none)",
 		vid_path ? vid_path : "(none)");
-	if (!s5k_path || !csis_path || !vid_path)
-		return 2;
+	if (!s5k_path || !csis_path || !vid_path) {
+		ret = 2;
+		goto out;
+	}
 
 	s5k_fd = open(s5k_path, O_RDWR);
 	csis_fd = open(csis_path, O_RDWR);
 	if (s5k_fd < 0 || csis_fd < 0) {
 		fprintf(stderr, "open subdev: %s\n", strerror(errno));
-		return 2;
+		ret = 2;
+		goto out;
+	}
+
+	/* Query current sensor controls */
+	{
+		struct v4l2_control ctrl;
+
+		ctrl.id = V4L2_CID_EXPOSURE;
+		if (ioctl(s5k_fd, VIDIOC_G_CTRL, &ctrl) == 0)
+			fprintf(stderr, "sensor current exposure: %d\n", ctrl.value);
+		ctrl.id = V4L2_CID_ANALOGUE_GAIN;
+		if (ioctl(s5k_fd, VIDIOC_G_CTRL, &ctrl) == 0)
+			fprintf(stderr, "sensor current gain: %d\n", ctrl.value);
+
+		if (want_exposure >= 0) {
+			ctrl.id = V4L2_CID_EXPOSURE;
+			ctrl.value = want_exposure;
+			if (ioctl(s5k_fd, VIDIOC_S_CTRL, &ctrl) < 0)
+				fprintf(stderr, "set exposure %d: %s\n",
+					want_exposure, strerror(errno));
+			else
+				fprintf(stderr, "sensor exposure set to: %d\n", want_exposure);
+		}
+		if (want_gain >= 0) {
+			ctrl.id = V4L2_CID_ANALOGUE_GAIN;
+			ctrl.value = want_gain;
+			if (ioctl(s5k_fd, VIDIOC_S_CTRL, &ctrl) < 0)
+				fprintf(stderr, "set gain %d: %s\n",
+					want_gain, strerror(errno));
+			else
+				fprintf(stderr, "sensor gain set to: %d\n", want_gain);
+		}
 	}
 
 	fprintf(stderr, "programming pad formats:\n");
 	if (set_pad_format(s5k_fd, 0, want_w, want_h,
 			   MEDIA_BUS_FMT_SGRBG10_1X10) < 0) {
 		fprintf(stderr, "sensor S_FMT: %s\n", strerror(errno));
-		return 3;
+		ret = 3;
+		goto out;
 	}
 	if (set_pad_format(csis_fd, 0, want_w, want_h,
 			   MEDIA_BUS_FMT_SGRBG10_1X10) < 0)
@@ -281,13 +341,15 @@ int main(int argc, char **argv)
 	vid_fd = open(vid_path, O_RDWR | O_NONBLOCK);
 	if (vid_fd < 0) {
 		fprintf(stderr, "open %s: %s\n", vid_path, strerror(errno));
-		return 4;
+		ret = 4;
+		goto out;
 	}
 
 	memset(&cap, 0, sizeof(cap));
 	if (ioctl(vid_fd, VIDIOC_QUERYCAP, &cap) < 0) {
 		fprintf(stderr, "QUERYCAP: %s\n", strerror(errno));
-		return 5;
+		ret = 5;
+		goto out;
 	}
 	fprintf(stderr, "capture: %s (%s)\n", cap.card, cap.driver);
 
@@ -299,7 +361,8 @@ int main(int argc, char **argv)
 	fmt.fmt.pix.field = V4L2_FIELD_NONE;
 	if (ioctl(vid_fd, VIDIOC_S_FMT, &fmt) < 0) {
 		fprintf(stderr, "S_FMT: %s\n", strerror(errno));
-		return 6;
+		ret = 6;
+		goto out;
 	}
 	fprintf(stderr, "capture fmt %ux%u fourcc %.4s size %u bpl %u\n",
 		fmt.fmt.pix.width, fmt.fmt.pix.height,
@@ -312,16 +375,20 @@ int main(int argc, char **argv)
 	req.memory = V4L2_MEMORY_MMAP;
 	if (ioctl(vid_fd, VIDIOC_REQBUFS, &req) < 0) {
 		fprintf(stderr, "REQBUFS: %s\n", strerror(errno));
-		return 7;
+		ret = 7;
+		goto out;
 	}
 	if (req.count < 2) {
 		fprintf(stderr, "not enough buffers: %u\n", req.count);
-		return 8;
+		ret = 8;
+		goto out;
 	}
 
 	bufs = calloc(req.count, sizeof(*bufs));
-	if (!bufs)
-		return 9;
+	if (!bufs) {
+		ret = 9;
+		goto out;
+	}
 	for (i = 0; i < req.count; i++) {
 		memset(&buf, 0, sizeof(buf));
 		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -329,13 +396,15 @@ int main(int argc, char **argv)
 		buf.index = i;
 		if (ioctl(vid_fd, VIDIOC_QUERYBUF, &buf) < 0) {
 			fprintf(stderr, "QUERYBUF: %s\n", strerror(errno));
-			return 10;
+			ret = 10;
+			goto out;
 		}
 		bufs[i].start = mmap(NULL, buf.length, PROT_READ | PROT_WRITE,
 				     MAP_SHARED, vid_fd, buf.m.offset);
 		if (bufs[i].start == MAP_FAILED) {
 			fprintf(stderr, "mmap: %s\n", strerror(errno));
-			return 11;
+			ret = 11;
+			goto out;
 		}
 		bufs[i].length = buf.length;
 	}
@@ -347,7 +416,8 @@ int main(int argc, char **argv)
 		buf.index = i;
 		if (ioctl(vid_fd, VIDIOC_QBUF, &buf) < 0) {
 			fprintf(stderr, "QBUF: %s\n", strerror(errno));
-			return 12;
+			ret = 12;
+			goto out;
 		}
 	}
 
@@ -356,7 +426,8 @@ int main(int argc, char **argv)
 
 		if (ioctl(vid_fd, VIDIOC_STREAMON, &type) < 0) {
 			fprintf(stderr, "STREAMON: %s\n", strerror(errno));
-			return 13;
+			ret = 13;
+			goto out;
 		}
 	}
 	fprintf(stderr, "streaming, waiting for a frame\n");
@@ -371,21 +442,38 @@ int main(int argc, char **argv)
 				continue;
 			}
 			fprintf(stderr, "DQBUF: %s\n", strerror(errno));
-			return 14;
+			ret = 14;
+			goto streamoff;
 		}
 		break;
 	}
 	if (n == 150) {
 		fprintf(stderr, "no frame dequeued within 15 s\n");
-		return 15;
+		ret = 15;
+		goto streamoff;
+	}
+
+	if (buf.index >= req.count || !bufs[buf.index].start ||
+	    bufs[buf.index].start == MAP_FAILED) {
+		fprintf(stderr, "invalid dequeued buffer index: %u\n", buf.index);
+		ret = 16;
+		goto streamoff;
 	}
 
 	size = buf.bytesused;
 	if (size > bufs[buf.index].length)
 		size = bufs[buf.index].length;
+	if (size < 2) {
+		fprintf(stderr, "empty or too small frame: %zu bytes\n", size);
+		ret = 16;
+		goto streamoff;
+	}
+
 	data = malloc(size);
-	if (!data)
-		return 16;
+	if (!data) {
+		ret = 16;
+		goto streamoff;
+	}
 	memcpy(data, bufs[buf.index].start, size);
 	fprintf(stderr, "frame dequeued: index %u bytes %zu sequence %u\n",
 		buf.index, size, buf.sequence);
@@ -416,13 +504,16 @@ int main(int argc, char **argv)
 	out_fd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (out_fd < 0) {
 		fprintf(stderr, "open %s: %s\n", outfile, strerror(errno));
-		return 17;
+		ret = 17;
+		goto streamoff;
 	}
 	w = write(out_fd, data, size);
 	close(out_fd);
+	out_fd = -1;
 	if (w < 0 || (size_t)w != size) {
 		fprintf(stderr, "write: %s\n", strerror(errno));
-		return 18;
+		ret = 18;
+		goto streamoff;
 	}
 
 	printf("frame_bytes=%zu\n", size);
@@ -434,18 +525,31 @@ int main(int argc, char **argv)
 	printf("\n");
 	printf("file=%s\n", outfile);
 
+streamoff:
 	{
 		int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 		ioctl(vid_fd, VIDIOC_STREAMOFF, &type);
 	}
-	for (i = 0; i < req.count; i++)
-		if (bufs[i].start && bufs[i].start != MAP_FAILED)
-			munmap(bufs[i].start, bufs[i].length);
-	free(bufs);
+
+out:
+	if (bufs) {
+		for (i = 0; i < req.count; i++)
+			if (bufs[i].start && bufs[i].start != MAP_FAILED)
+				munmap(bufs[i].start, bufs[i].length);
+		free(bufs);
+	}
 	free(data);
-	close(vid_fd);
-	close(s5k_fd);
-	close(csis_fd);
-	return 0;
+	free(s5k_path);
+	free(csis_path);
+	free(vid_path);
+	if (out_fd >= 0)
+		close(out_fd);
+	if (vid_fd >= 0)
+		close(vid_fd);
+	if (s5k_fd >= 0)
+		close(s5k_fd);
+	if (csis_fd >= 0)
+		close(csis_fd);
+	return ret;
 }
